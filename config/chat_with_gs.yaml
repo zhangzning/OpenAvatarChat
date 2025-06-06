@@ -28,10 +28,12 @@ default:
         model_name: "iic/SenseVoiceSmall"
       CosyVoice:
         enabled: True
-        module: tts/bailian_tts/tts_handler_cosyvoice_bailian
-        voice: "longxiaocheng"
-        model_name: "cosyvoice-v1"
-        # api_key: "" # default=os.getenv("DASHSCOPE_API_KEY")
+        module: tts/cosyvoice/tts_handler_cosyvoice
+        api_url: 'http://127.0.0.1:50000/inference_sft' #run CosyVoice/runtime/python/fastapi/server.py
+        ref_audio_path: "open-video-chat/src/third_party/CosyVoice/asset/zero_shot_prompt.wav" #use zero_shot model
+        ref_audio_text: "希望你以后能够做的比我还好呦。"
+        sample_rate: 24000
+        process_num: 2
       LLM_Bailian:
         enabled: True
         module: llm/openai_compatible/llm_handler_openai_compatible
@@ -42,6 +44,6 @@ default:
         api_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
         # api_url: 'http://127.0.0.1:11434/v1' # ollama
         # api_url: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-        # api_key: "" # default=os.getenv("DASHSCOPE_API_KEY")
+        api_key: "sk-xxx" # default=os.getenv("DASHSCOPE_API_KEY")
       LAM_Driver:
         module: avatar/lam/avatar_handler_lam_audio2expression
