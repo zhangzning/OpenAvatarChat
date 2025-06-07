@@ -51,8 +51,29 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
                                             "dump_avatar_audio.pcm")
             self.audio_dump_file = open(dump_file_path, "wb")
         logger.info('start tts processor')
+        if self.api_url is not None and self.model_name is None:
+            # === 构造 multipart/form-data 请求 ===
+            files = {
+                'prompt_wav': open(self.ref_audio_path, 'rb')
+            }
+            data = {
+                'prompt_text': self.ref_audio_text,
+                'tts_text': '测试'
+            }
+
+            # === 发送 POST 请求，流式接收返回的音频 ===
+            print("正在发送请求...")
+            response = requests.post(self.api_url, data=data, files=files, stream=True)
+            if response is not None:
+                for tts_speech in response:
+                    self.output_queue.put({
+                        'key': '',
+                        'tts_speech': tts_speech,
+                        'session_id': ''
+                    })
+                    logger.debug('tts test')
         # use local model
-        if self.api_key is None and self.model_name is not None:
+        elif self.api_key is None and self.model_name is not None:
             sys.path.append(os.path.join(self.handler_root, "CosyVoice"))
             sys.path.append(os.path.join(self.handler_root, 'CosyVoice', 'third_party', 'Matcha-TTS'))
             from handlers.tts.cosyvoice.CosyVoice.cosyvoice.utils.file_utils import load_wav
@@ -103,11 +124,28 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
                 # ignore
                 logger.info('ignore empty input_text')
             elif self.model is None and self.api_url is not None:
-                # if you start cosyvoice tts server through CosyVoice/runtime/python/fastapi/server.py
-                response = requests.get(self.api_url, data={
-                    'tts_text': input_text,
-                    'spk_id': self.spk_id
-                }, stream=True)
+
+
+                # === 构造 multipart/form-data 请求 ===
+                files = {
+                    'prompt_wav': open(self.ref_audio_path, 'rb')
+                }
+                data = {
+                    'prompt_text': self.ref_audio_text,
+                    'tts_text': input_text
+                }
+
+                # === 发送 POST 请求，流式接收返回的音频 ===
+                print("正在发送请求...")
+                response = requests.post(self.api_url, data=data, files=files, stream=True)
+
+
+
+                # # if you start cosyvoice tts server through CosyVoice/runtime/python/fastapi/server.py
+                # response = requests.get(self.api_url, data={
+                #     'tts_text': input_text,
+                #     'spk_id': self.spk_id
+                # }, stream=True)
                 if response.status_code != 200:
                     logger.info(f"Request failed with status code {response.status_code}")
                     continue

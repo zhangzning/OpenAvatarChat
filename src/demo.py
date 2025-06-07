@@ -17,10 +17,14 @@ if project_dir not in sys.path:
 
 import argparse
 import os
+from pathlib import Path
 
 import gradio as gr
 
 from chat_engine.chat_engine import ChatEngine
+from fastapi.staticfiles import StaticFiles  # ✅ 引入静态文件支持
+from fastapi.responses import FileResponse
+
 
 
 def parse_args():
@@ -35,6 +39,17 @@ def parse_args():
 def setup_demo():
     app = FastAPI()
 
+    
+    @app.get("/favicon.ico")
+    async def favicon():
+        print('--------------------------------------ddddddddddddddddd')
+        return FileResponse(static_path / "favicon.ico")
+
+
+    # ✅ 挂载 static 文件夹，用于 favicon.ico 等
+    static_path = Path(__file__).parent / "static"
+    app.mount("/static", StaticFiles(directory=static_path), name="static")    
+    print('----------------------------------------------------------------------------------------------------',static_path)
     @app.get("/")
     def get_root():
         return RedirectResponse(url="/ui")
@@ -51,11 +66,11 @@ def setup_demo():
         display: none !important;
     }
     """
-    with gr.Blocks(css=css) as gradio_block:
+    with gr.Blocks(css=css, title="哈哈哈哈哈哈") as gradio_block:
         with gr.Column():
             with gr.Group() as rtc_container:
                 pass
-    gradio.mount_gradio_app(app, gradio_block, "/ui")
+    gradio.mount_gradio_app(app, gradio_block, "/ui", app_kwargs={"favicon_path": "favicon.ico"})
     return app, gradio_block, rtc_container
 
 def main():
